@@ -1,16 +1,16 @@
 <template>
     <div class="container">
         <div class="row justify-content-center mt-5">
-            <div class="col-md-8">
+            <div class="col-md-8 mb-3">
                 <div class="places-input container-fluid">
                     <input type="search" id="single-country-search" class="container-fluid" placeholder="Choose a city" />
                     <div>Selected: <strong id="single-country-address-value">none for now.. :)</strong></div>
                 </div> <!-- end input -->
                 <div class="container-fluid mt-3">
-                    <div class="container h3">Current weather in {{ this.location.name }} <br><span class="mark"><a href="https://api.meteo.lt/" target="_blank" rel="noopener noreferrer">(*data comes from LHMT)</a></span></div>
+                    <div class="container h3">Current weather in {{ location.name }} <br><span class="mark"><a href="https://api.meteo.lt/" target="_blank" rel="noopener noreferrer">(*data comes from LHMT)</a></span></div>
                     <div class="container mt-3">
                         <div class="temperature">{{ currentTemperature.actual }}°C</div>
-                        <img class="icon" src="../../.././public/icons/clear.png" alt="Clear">
+                        <img class="icon" :src="'icons/'+currentTemperature.summary+'.png'" alt="icon">
                     </div>
                 </div> <!-- end weather -->
                 <div>

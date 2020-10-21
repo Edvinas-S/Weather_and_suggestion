@@ -52,12 +52,11 @@
 
 *{transition: .5s;}
 
-.h-100{height: 100vh !important;}
+.h-100{height: 100% !important;}
 
 .align-middle{
   position: relative;
   top:50%;
-  transform:translateY(-50%);
 }
 
 .column{
@@ -86,7 +85,7 @@
   margin: 0;
   padding: 1.7rem 1.2rem;
   border: none;
-  border-radius: 0;
+  border-radius: 2%;
   color:rgba(0,0,0,1);
   letter-spacing: .05rem;
   font-family: 'Oswald', sans-serif;

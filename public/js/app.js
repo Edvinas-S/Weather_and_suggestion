@@ -6462,7 +6462,7 @@ exports.push([module.i, "@import url(https://fonts.googleapis.com/css?family=Osw
 exports.push([module.i, "@import url(https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800);", ""]);
 
 // module
-exports.push([module.i, "\n.gr-1{background: linear-gradient(170deg, #01E4F8 0%, #1D3EDE 100%);}\n.gr-2{background: linear-gradient(170deg, #B4EC51 0%, #429321 100%);}\n.gr-3{background: linear-gradient(170deg, #C86DD7 0%, #3023AE 100%);}\n*{transition: .5s;}\n.h-100{height: 100vh !important;}\n.align-middle{\r\n  position: relative;\r\n  top:50%;\r\n  transform:translateY(-50%);\n}\n.column{\r\n  margin-top:3rem;\r\n  padding-left:3rem;\n}\n.column:hover {\r\n    padding-left:0;\n}\n.card:hover, .txt:hover{\r\n      margin-left:1rem;\n}\nh1:hover, p:hover{\r\n        color:rgba(255,255,255,1);\r\n        opacity:1;\n}\na:hover{\r\n      color:rgba(255,255,255,1);\n}\na::after{\r\n      width: 10%;\n}\n.card{\r\n  min-height:170px;\r\n  margin: 0;\r\n  padding: 1.7rem 1.2rem;\r\n  border: none;\r\n  border-radius: 0;\r\n  color:rgba(0,0,0,1);\r\n  letter-spacing: .05rem;\r\n  font-family: 'Oswald', sans-serif;\r\n  box-shadow: 0 0 21px rgba(0,0,0,.27);\n}\n.txt{\r\n    margin-left:-3rem;\r\n    z-index: 1;\n}\nh1{\r\n    font-size:1.5rem;\r\n    font-weight: 300;\r\n    text-transform: uppercase;\n}\np{\r\n    font-size:.7rem;\r\n    font-family: 'Open Sans', sans-serif;\r\n    letter-spacing: 0rem;\r\n    margin-top:33px;\r\n    opacity:0;\r\n    color:rgba(255,255,255,1);\n}\na{\r\n  z-index:3;\r\n  font-size: .7rem;\r\n  color:rgba(0,0,0,1);\r\n  margin-left:1rem;\r\n  position:relative;\r\n  bottom: -.5rem;\r\n  text-transform: uppercase;\n}\na::after {\r\n    content:\"\";\r\n    display: inline-block;\r\n    height: 0.5em;\r\n    width: 0;\r\n    margin-right: -100%;\r\n    margin-left: 10px;\r\n    border-top: 1px solid rgba(255,255,255,1);\r\n    transition: .5s;\n}\n.ico-card {\r\n    position:absolute;\r\n    top: 0;\r\n    left:0;\r\n    bottom:0;\r\n    right: 0;\r\n    width: 100%;\r\n    height: 100%;\r\n    overflow: hidden;\n}\ni {\r\n  position: relative;\r\n  right: -50%;\r\n  top:60%;\r\n  font-size: 48px;\r\n  line-height: 0;\r\n  opacity: .2;\r\n  color:rgba(255,255,255,1);\r\n  z-index: 0;\n}\ni::before {\r\n  font-size: 130px;\n}\r\n\r\n", ""]);
+exports.push([module.i, "\n.gr-1{background: linear-gradient(170deg, #01E4F8 0%, #1D3EDE 100%);}\n.gr-2{background: linear-gradient(170deg, #B4EC51 0%, #429321 100%);}\n.gr-3{background: linear-gradient(170deg, #C86DD7 0%, #3023AE 100%);}\n*{transition: .5s;}\n.h-100{height: 100% !important;}\n.align-middle{\r\n  position: relative;\r\n  top:50%;\n}\n.column{\r\n  margin-top:3rem;\r\n  padding-left:3rem;\n}\n.column:hover {\r\n    padding-left:0;\n}\n.card:hover, .txt:hover{\r\n      margin-left:1rem;\n}\nh1:hover, p:hover{\r\n        color:rgba(255,255,255,1);\r\n        opacity:1;\n}\na:hover{\r\n      color:rgba(255,255,255,1);\n}\na::after{\r\n      width: 10%;\n}\n.card{\r\n  min-height:170px;\r\n  margin: 0;\r\n  padding: 1.7rem 1.2rem;\r\n  border: none;\r\n  border-radius: 2%;\r\n  color:rgba(0,0,0,1);\r\n  letter-spacing: .05rem;\r\n  font-family: 'Oswald', sans-serif;\r\n  box-shadow: 0 0 21px rgba(0,0,0,.27);\n}\n.txt{\r\n    margin-left:-3rem;\r\n    z-index: 1;\n}\nh1{\r\n    font-size:1.5rem;\r\n    font-weight: 300;\r\n    text-transform: uppercase;\n}\np{\r\n    font-size:.7rem;\r\n    font-family: 'Open Sans', sans-serif;\r\n    letter-spacing: 0rem;\r\n    margin-top:33px;\r\n    opacity:0;\r\n    color:rgba(255,255,255,1);\n}\na{\r\n  z-index:3;\r\n  font-size: .7rem;\r\n  color:rgba(0,0,0,1);\r\n  margin-left:1rem;\r\n  position:relative;\r\n  bottom: -.5rem;\r\n  text-transform: uppercase;\n}\na::after {\r\n    content:\"\";\r\n    display: inline-block;\r\n    height: 0.5em;\r\n    width: 0;\r\n    margin-right: -100%;\r\n    margin-left: 10px;\r\n    border-top: 1px solid rgba(255,255,255,1);\r\n    transition: .5s;\n}\n.ico-card {\r\n    position:absolute;\r\n    top: 0;\r\n    left:0;\r\n    bottom:0;\r\n    right: 0;\r\n    width: 100%;\r\n    height: 100%;\r\n    overflow: hidden;\n}\ni {\r\n  position: relative;\r\n  right: -50%;\r\n  top:60%;\r\n  font-size: 48px;\r\n  line-height: 0;\r\n  opacity: .2;\r\n  color:rgba(255,255,255,1);\r\n  z-index: 0;\n}\ni::before {\r\n  font-size: 130px;\n}\r\n\r\n", ""]);
 
 // exports
 
@@ -38364,12 +38364,12 @@ var render = function() {
   var _c = _vm._self._c || _h
   return _c("div", { staticClass: "container" }, [
     _c("div", { staticClass: "row justify-content-center mt-5" }, [
-      _c("div", { staticClass: "col-md-8" }, [
+      _c("div", { staticClass: "col-md-8 mb-3" }, [
         _vm._m(0),
         _vm._v(" "),
         _c("div", { staticClass: "container-fluid mt-3" }, [
           _c("div", { staticClass: "container h3" }, [
-            _vm._v("Current weather in " + _vm._s(this.location.name) + " "),
+            _vm._v("Current weather in " + _vm._s(_vm.location.name) + " "),
             _c("br"),
             _vm._m(1)
           ]),
@@ -38382,8 +38382,8 @@ var render = function() {
             _c("img", {
               staticClass: "icon",
               attrs: {
-                src: __webpack_require__(/*! ../../.././public/icons/clear.png */ "./public/icons/clear.png"),
-                alt: "Clear"
+                src: "icons/" + _vm.currentTemperature.summary + ".png",
+                alt: "icon"
               }
             })
           ])
@@ -50601,17 +50601,6 @@ module.exports = function(module) {
 	return module;
 };
 
-
-/***/ }),
-
-/***/ "./public/icons/clear.png":
-/*!********************************!*\
-  !*** ./public/icons/clear.png ***!
-  \********************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-module.exports = "/images/clear.png?4cf2907a1083c067828830bb007e2f34";
 
 /***/ }),
 
