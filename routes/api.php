@@ -2,7 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Zttp\Zttp;
+// use Zttp\Zttp;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,10 +19,10 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::get('/weather', function() {
-    $city = request('city');
+// Route::get('/weather', function() {
+//     $city = request('city');
 
-    $response = Zttp::get("https://api.meteo.lt/v1/places/$city/forecasts/long-term");
+//     $response = Zttp::get("https://api.meteo.lt/v1/places/$city/forecasts/long-term");
 
-    return $response->json();
-});
+//     return $response->json();
+// });

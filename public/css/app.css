@@ -10909,3 +10909,15 @@ body {
   background-position: center;
 }
 
+.temperature {
+  float: left;
+  font-size: x-large;
+  font-weight: bold;
+  margin-top: 45px;
+}
+
+.icon {
+  display: inline-block;
+  margin-left: 30px;
+}
+

@@ -1931,6 +1931,7 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   name: 'Weather',
@@ -1944,22 +1945,19 @@ __webpack_require__.r(__webpack_exports__);
     var placesAutocomplete = places({
       appId: 'plPS9O3LEBLU',
       apiKey: '1fa190c53ff8c6b4219e84892bbed141',
-      container: document.querySelector('#single-country-search') // templates: {
-      // value: function(suggestion) {
-      //     return suggestion.name;
-      //     }
-      // }
-
+      container: document.querySelector('#single-country-search'),
+      templates: {
+        value: function value(suggestion) {
+          return suggestion.name;
+        }
+      }
     }).configure({
       countries: ['lt']
     });
     var $address = document.querySelector('#single-country-address-value');
     placesAutocomplete.on('change', function (e) {
       $address.textContent = e.suggestion.value;
-      _this.location.name = "".concat(e.suggestion.name, ", ").concat(e.suggestion.country);
-    });
-    placesAutocomplete.on('clear', function () {
-      $address.textContent = 'none';
+      _this.location.name = "".concat(_this.correctLithuanianLetters(e.suggestion.name));
     });
   },
   watch: {
@@ -1980,6 +1978,44 @@ __webpack_require__.r(__webpack_exports__);
         name: 'Vilnius'
       }
     };
+  },
+  methods: {
+    fetchData: function fetchData() {
+      var _this2 = this;
+
+      fetch("https://cors-anywhere.herokuapp.com/https://api.meteo.lt/v1/places/".concat(this.location.name, "/forecasts/long-term")) // fetch(`/api/weather?city=${this.location.name}`)
+      .then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        _this2.currentTemperature.actual = Math.round(data.forecastTimestamps[0].airTemperature);
+        _this2.currentTemperature.summary = data.forecastTimestamps[0].conditionCode;
+      });
+    },
+    correctLithuanianLetters: function correctLithuanianLetters(string) {
+      var dictionary = {
+        'Ą': 'A',
+        'ą': 'a',
+        'Č': 'C',
+        'č': 'c',
+        'Ę': 'E',
+        'ę': 'e',
+        'Ė': 'E',
+        'ė': 'e',
+        'Į': 'I',
+        'į': 'i',
+        'Š': 'S',
+        'š': 's',
+        'Ų': 'U',
+        'ų': 'u',
+        'Ū': 'U',
+        'ū': 'u',
+        'Ž': 'Z',
+        'ž': 'z'
+      };
+      return string.replace(/[ĄąČčĘęĖėĮįŠšŲųŪūŽž]/g, function (match) {
+        return dictionary[match];
+      });
+    }
   }
 });
 
@@ -38331,7 +38367,27 @@ var render = function() {
       _c("div", { staticClass: "col-md-8" }, [
         _vm._m(0),
         _vm._v(" "),
-        _vm._m(1),
+        _c("div", { staticClass: "container-fluid mt-3" }, [
+          _c("div", { staticClass: "container h3" }, [
+            _vm._v("Current weather in " + _vm._s(this.location.name) + " "),
+            _c("br"),
+            _vm._m(1)
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "container mt-3" }, [
+            _c("div", { staticClass: "temperature" }, [
+              _vm._v(_vm._s(_vm.currentTemperature.actual) + "°C")
+            ]),
+            _vm._v(" "),
+            _c("img", {
+              staticClass: "icon",
+              attrs: {
+                src: __webpack_require__(/*! ../../.././public/icons/clear.png */ "./public/icons/clear.png"),
+                alt: "Clear"
+              }
+            })
+          ])
+        ]),
         _vm._v(" "),
         _c("div", [_c("Cards")], 1)
       ])
@@ -38365,14 +38421,18 @@ var staticRenderFns = [
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("div", {}, [
-      _c("div", { staticClass: "header" }, [
-        _vm._v("Current weather in :city:")
-      ]),
-      _vm._v(" "),
-      _c("div", { staticClass: "body" }, [
-        _vm._v("\n                    Labass\n                ")
-      ])
+    return _c("span", { staticClass: "mark" }, [
+      _c(
+        "a",
+        {
+          attrs: {
+            href: "https://api.meteo.lt/",
+            target: "_blank",
+            rel: "noopener noreferrer"
+          }
+        },
+        [_vm._v("(*data comes from LHMT)")]
+      )
     ])
   }
 ]
@@ -50541,6 +50601,17 @@ module.exports = function(module) {
 	return module;
 };
 
+
+/***/ }),
+
+/***/ "./public/icons/clear.png":
+/*!********************************!*\
+  !*** ./public/icons/clear.png ***!
+  \********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = "/images/clear.png?4cf2907a1083c067828830bb007e2f34";
 
 /***/ }),
 

@@ -6,10 +6,11 @@
                     <input type="search" id="single-country-search" class="container-fluid" placeholder="Choose a city" />
                     <div>Selected: <strong id="single-country-address-value">none for now.. :)</strong></div>
                 </div> <!-- end input -->
-                <div class="">
-                    <div class="header">Current weather in :city:</div>
-                    <div class="body">
-                        Labass
+                <div class="container-fluid mt-3">
+                    <div class="container h3">Current weather in {{ this.location.name }} <br><span class="mark"><a href="https://api.meteo.lt/" target="_blank" rel="noopener noreferrer">(*data comes from LHMT)</a></span></div>
+                    <div class="container mt-3">
+                        <div class="temperature">{{ currentTemperature.actual }}°C</div>
+                        <img class="icon" src="../../.././public/icons/clear.png" alt="Clear">
                     </div>
                 </div> <!-- end weather -->
                 <div>
@@ -35,21 +36,18 @@ export default {
             appId: 'plPS9O3LEBLU',
             apiKey: '1fa190c53ff8c6b4219e84892bbed141',
             container: document.querySelector('#single-country-search'),
-            // templates: {
-            // value: function(suggestion) {
-            //     return suggestion.name;
-            //     }
-            // }
+            templates: {
+            value: function(suggestion) {
+                return suggestion.name;
+                }
+            }
         }).configure({
             countries: ['lt'],
         });
         var $address = document.querySelector('#single-country-address-value')
             placesAutocomplete.on('change', (e) => {
             $address.textContent = e.suggestion.value
-            this.location.name = `${e.suggestion.name}, ${e.suggestion.country}`
-        });
-        placesAutocomplete.on('clear', function() {
-            $address.textContent = 'none';
+            this.location.name = `${this.correctLithuanianLetters(e.suggestion.name)}`
         });
     },
     watch: {
@@ -70,6 +68,21 @@ export default {
                 name: 'Vilnius',
             }
         }
+    },
+    methods: {
+        fetchData() {
+            fetch(`https://cors-anywhere.herokuapp.com/https://api.meteo.lt/v1/places/${this.location.name}/forecasts/long-term`)
+            // fetch(`/api/weather?city=${this.location.name}`)
+            .then(response => response.json())
+            .then(data => {
+                this.currentTemperature.actual = Math.round(data.forecastTimestamps[0].airTemperature)
+                this.currentTemperature.summary = data.forecastTimestamps[0].conditionCode
+            })
+        },
+        correctLithuanianLetters (string) {
+            const dictionary = {'Ą':'A','ą':'a','Č':'C','č':'c','Ę':'E','ę':'e','Ė':'E','ė':'e','Į':'I','į':'i','Š':'S','š':'s','Ų':'U','ų':'u','Ū':'U','ū':'u','Ž':'Z','ž':'z'};
+            return string.replace(/[ĄąČčĘęĖėĮįŠšŲųŪūŽž]/g, match => dictionary[match]);
+        },
     },
 }
 </script>
