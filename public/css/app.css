@@ -10904,6 +10904,8 @@ a.text-dark:focus {
 }
 
 body {
-  background-color: aqua;
+  background-image: url(/images/background.jpg?b9859470a1cc08e1b1a35fb9549b7ccd);
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
