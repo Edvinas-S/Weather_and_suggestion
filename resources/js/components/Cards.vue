@@ -4,8 +4,8 @@
             <div class="col-md-6 col-lg-4 column">
                 <div class="card gr-1">
                     <div class="txt">
-                        <h1>HAT</h1>
-                        <p>17.65eur <img src="../../.././public/img/hat.png" alt="Hat"></p>
+                        <h1>{{ this.products[0].name }}</h1>
+                        <p>{{ this.products[0].price }} eur <img :src="'img/'+ this.products[0].name+'.png'" alt="pictureOfItem"></p>
                     </div>
                     <a href="#">Buy</a>
                     <div class="ico-card">
@@ -16,8 +16,8 @@
             <div class="col-md-6 col-lg-4 column">
                 <div class="card gr-2">
                     <div class="txt">
-                        <h1>Rainpants</h1>
-                        <p>77.66eur <img src="../../.././public/img/rainpants.png" alt="Rainpants"></p>
+                        <h1>{{ this.products[1].name }}</h1>
+                        <p>{{ this.products[1].price }} eur <img :src="'img/'+this.products[1].name+'.png'" alt="pictureOfItem"></p>
                     </div>
                     <a href="#">Buy</a>
                     <div class="ico-card">
@@ -28,8 +28,8 @@
             <div class="col-md-6 col-lg-4 column">
                 <div class="card gr-3">
                     <div class="txt">
-                        <h1>Umbrela</h1>
-                        <p>19.99eur <img src="../../.././public/img/umrela.png" alt="Umrela"></p>
+                        <h1>{{ this.products[2].name }}</h1>
+                        <p>{{ this.products[2].price }} eur <img :src="'img/'+ this.products[2].name+'.png'" alt="pictureOfItem"></p>
                     </div>
                     <a href="#">Buy</a>
                     <div class="ico-card">
@@ -40,6 +40,18 @@
         </div>
     </div>
 </template>
+
+
+<script>
+export default {
+  name: 'Cards',
+  props: {
+    products: {
+      type: Array
+    }
+  },
+}
+</script>
 
 <style>
 @import url('https://fonts.googleapis.com/css?family=Oswald:300,400,500,700');

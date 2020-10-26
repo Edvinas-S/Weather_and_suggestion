@@ -109,6 +109,7 @@ module.exports = __webpack_require__(/*! ./lib/axios */ "./node_modules/axios/li
 
 var utils = __webpack_require__(/*! ./../utils */ "./node_modules/axios/lib/utils.js");
 var settle = __webpack_require__(/*! ./../core/settle */ "./node_modules/axios/lib/core/settle.js");
+var cookies = __webpack_require__(/*! ./../helpers/cookies */ "./node_modules/axios/lib/helpers/cookies.js");
 var buildURL = __webpack_require__(/*! ./../helpers/buildURL */ "./node_modules/axios/lib/helpers/buildURL.js");
 var buildFullPath = __webpack_require__(/*! ../core/buildFullPath */ "./node_modules/axios/lib/core/buildFullPath.js");
 var parseHeaders = __webpack_require__(/*! ./../helpers/parseHeaders */ "./node_modules/axios/lib/helpers/parseHeaders.js");
@@ -124,12 +125,19 @@ module.exports = function xhrAdapter(config) {
       delete requestHeaders['Content-Type']; // Let the browser set it
     }
 
+    if (
+      (utils.isBlob(requestData) || utils.isFile(requestData)) &&
+      requestData.type
+    ) {
+      delete requestHeaders['Content-Type']; // Let the browser set it
+    }
+
     var request = new XMLHttpRequest();
 
     // HTTP basic authentication
     if (config.auth) {
       var username = config.auth.username || '';
-      var password = config.auth.password || '';
+      var password = unescape(encodeURIComponent(config.auth.password)) || '';
       requestHeaders.Authorization = 'Basic ' + btoa(username + ':' + password);
     }
 
@@ -210,8 +218,6 @@ module.exports = function xhrAdapter(config) {
     // This is only done if running in a standard browser environment.
     // Specifically not if we're in a web worker, or react-native.
     if (utils.isStandardBrowserEnv()) {
-      var cookies = __webpack_require__(/*! ./../helpers/cookies */ "./node_modules/axios/lib/helpers/cookies.js");
-
       // Add xsrf header
       var xsrfValue = (config.withCredentials || isURLSameOrigin(fullPath)) && config.xsrfCookieName ?
         cookies.read(config.xsrfCookieName) :
@@ -277,7 +283,7 @@ module.exports = function xhrAdapter(config) {
       });
     }
 
-    if (requestData === undefined) {
+    if (!requestData) {
       requestData = null;
     }
 
@@ -554,7 +560,7 @@ Axios.prototype.getUri = function getUri(config) {
 utils.forEach(['delete', 'get', 'head', 'options'], function forEachMethodNoData(method) {
   /*eslint func-names:0*/
   Axios.prototype[method] = function(url, config) {
-    return this.request(utils.merge(config || {}, {
+    return this.request(mergeConfig(config || {}, {
       method: method,
       url: url
     }));
@@ -564,7 +570,7 @@ utils.forEach(['delete', 'get', 'head', 'options'], function forEachMethodNoData
 utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
   /*eslint func-names:0*/
   Axios.prototype[method] = function(url, data, config) {
-    return this.request(utils.merge(config || {}, {
+    return this.request(mergeConfig(config || {}, {
       method: method,
       url: url,
       data: data
@@ -824,7 +830,7 @@ module.exports = function enhanceError(error, config, code, request, response) {
   error.response = response;
   error.isAxiosError = true;
 
-  error.toJSON = function() {
+  error.toJSON = function toJSON() {
     return {
       // Standard
       message: this.message,
@@ -873,59 +879,73 @@ module.exports = function mergeConfig(config1, config2) {
   config2 = config2 || {};
   var config = {};
 
-  var valueFromConfig2Keys = ['url', 'method', 'params', 'data'];
-  var mergeDeepPropertiesKeys = ['headers', 'auth', 'proxy'];
+  var valueFromConfig2Keys = ['url', 'method', 'data'];
+  var mergeDeepPropertiesKeys = ['headers', 'auth', 'proxy', 'params'];
   var defaultToConfig2Keys = [
-    'baseURL', 'url', 'transformRequest', 'transformResponse', 'paramsSerializer',
-    'timeout', 'withCredentials', 'adapter', 'responseType', 'xsrfCookieName',
-    'xsrfHeaderName', 'onUploadProgress', 'onDownloadProgress',
-    'maxContentLength', 'validateStatus', 'maxRedirects', 'httpAgent',
-    'httpsAgent', 'cancelToken', 'socketPath'
+    'baseURL', 'transformRequest', 'transformResponse', 'paramsSerializer',
+    'timeout', 'timeoutMessage', 'withCredentials', 'adapter', 'responseType', 'xsrfCookieName',
+    'xsrfHeaderName', 'onUploadProgress', 'onDownloadProgress', 'decompress',
+    'maxContentLength', 'maxBodyLength', 'maxRedirects', 'transport', 'httpAgent',
+    'httpsAgent', 'cancelToken', 'socketPath', 'responseEncoding'
   ];
+  var directMergeKeys = ['validateStatus'];
+
+  function getMergedValue(target, source) {
+    if (utils.isPlainObject(target) && utils.isPlainObject(source)) {
+      return utils.merge(target, source);
+    } else if (utils.isPlainObject(source)) {
+      return utils.merge({}, source);
+    } else if (utils.isArray(source)) {
+      return source.slice();
+    }
+    return source;
+  }
+
+  function mergeDeepProperties(prop) {
+    if (!utils.isUndefined(config2[prop])) {
+      config[prop] = getMergedValue(config1[prop], config2[prop]);
+    } else if (!utils.isUndefined(config1[prop])) {
+      config[prop] = getMergedValue(undefined, config1[prop]);
+    }
+  }
 
   utils.forEach(valueFromConfig2Keys, function valueFromConfig2(prop) {
-    if (typeof config2[prop] !== 'undefined') {
-      config[prop] = config2[prop];
+    if (!utils.isUndefined(config2[prop])) {
+      config[prop] = getMergedValue(undefined, config2[prop]);
     }
   });
 
-  utils.forEach(mergeDeepPropertiesKeys, function mergeDeepProperties(prop) {
-    if (utils.isObject(config2[prop])) {
-      config[prop] = utils.deepMerge(config1[prop], config2[prop]);
-    } else if (typeof config2[prop] !== 'undefined') {
-      config[prop] = config2[prop];
-    } else if (utils.isObject(config1[prop])) {
-      config[prop] = utils.deepMerge(config1[prop]);
-    } else if (typeof config1[prop] !== 'undefined') {
-      config[prop] = config1[prop];
-    }
-  });
+  utils.forEach(mergeDeepPropertiesKeys, mergeDeepProperties);
 
   utils.forEach(defaultToConfig2Keys, function defaultToConfig2(prop) {
-    if (typeof config2[prop] !== 'undefined') {
-      config[prop] = config2[prop];
-    } else if (typeof config1[prop] !== 'undefined') {
-      config[prop] = config1[prop];
+    if (!utils.isUndefined(config2[prop])) {
+      config[prop] = getMergedValue(undefined, config2[prop]);
+    } else if (!utils.isUndefined(config1[prop])) {
+      config[prop] = getMergedValue(undefined, config1[prop]);
+    }
+  });
+
+  utils.forEach(directMergeKeys, function merge(prop) {
+    if (prop in config2) {
+      config[prop] = getMergedValue(config1[prop], config2[prop]);
+    } else if (prop in config1) {
+      config[prop] = getMergedValue(undefined, config1[prop]);
     }
   });
 
   var axiosKeys = valueFromConfig2Keys
     .concat(mergeDeepPropertiesKeys)
-    .concat(defaultToConfig2Keys);
+    .concat(defaultToConfig2Keys)
+    .concat(directMergeKeys);
 
   var otherKeys = Object
-    .keys(config2)
+    .keys(config1)
+    .concat(Object.keys(config2))
     .filter(function filterAxiosKeys(key) {
       return axiosKeys.indexOf(key) === -1;
     });
 
-  utils.forEach(otherKeys, function otherKeysDefaultToConfig2(prop) {
-    if (typeof config2[prop] !== 'undefined') {
-      config[prop] = config2[prop];
-    } else if (typeof config1[prop] !== 'undefined') {
-      config[prop] = config1[prop];
-    }
-  });
+  utils.forEach(otherKeys, mergeDeepProperties);
 
   return config;
 };
@@ -954,7 +974,7 @@ var createError = __webpack_require__(/*! ./createError */ "./node_modules/axios
  */
 module.exports = function settle(resolve, reject, response) {
   var validateStatus = response.config.validateStatus;
-  if (!validateStatus || validateStatus(response.status)) {
+  if (!response.status || !validateStatus || validateStatus(response.status)) {
     resolve(response);
   } else {
     reject(createError(
@@ -1086,6 +1106,7 @@ var defaults = {
   xsrfHeaderName: 'X-XSRF-TOKEN',
 
   maxContentLength: -1,
+  maxBodyLength: -1,
 
   validateStatus: function validateStatus(status) {
     return status >= 200 && status < 300;
@@ -1149,7 +1170,6 @@ var utils = __webpack_require__(/*! ./../utils */ "./node_modules/axios/lib/util
 
 function encode(val) {
   return encodeURIComponent(val).
-    replace(/%40/gi, '@').
     replace(/%3A/gi, ':').
     replace(/%24/g, '$').
     replace(/%2C/gi, ',').
@@ -1659,6 +1679,21 @@ function isObject(val) {
 }
 
 /**
+ * Determine if a value is a plain Object
+ *
+ * @param {Object} val The value to test
+ * @return {boolean} True if value is a plain Object, otherwise false
+ */
+function isPlainObject(val) {
+  if (toString.call(val) !== '[object Object]') {
+    return false;
+  }
+
+  var prototype = Object.getPrototypeOf(val);
+  return prototype === null || prototype === Object.prototype;
+}
+
+/**
  * Determine if a value is a Date
  *
  * @param {Object} val The value to test
@@ -1814,34 +1849,12 @@ function forEach(obj, fn) {
 function merge(/* obj1, obj2, obj3, ... */) {
   var result = {};
   function assignValue(val, key) {
-    if (typeof result[key] === 'object' && typeof val === 'object') {
+    if (isPlainObject(result[key]) && isPlainObject(val)) {
       result[key] = merge(result[key], val);
-    } else {
-      result[key] = val;
-    }
-  }
-
-  for (var i = 0, l = arguments.length; i < l; i++) {
-    forEach(arguments[i], assignValue);
-  }
-  return result;
-}
-
-/**
- * Function equal to merge with the difference being that no reference
- * to original objects is kept.
- *
- * @see merge
- * @param {Object} obj1 Object to merge
- * @returns {Object} Result of all merge properties
- */
-function deepMerge(/* obj1, obj2, obj3, ... */) {
-  var result = {};
-  function assignValue(val, key) {
-    if (typeof result[key] === 'object' && typeof val === 'object') {
-      result[key] = deepMerge(result[key], val);
-    } else if (typeof val === 'object') {
-      result[key] = deepMerge({}, val);
+    } else if (isPlainObject(val)) {
+      result[key] = merge({}, val);
+    } else if (isArray(val)) {
+      result[key] = val.slice();
     } else {
       result[key] = val;
     }
@@ -1872,6 +1885,19 @@ function extend(a, b, thisArg) {
   return a;
 }
 
+/**
+ * Remove byte order marker. This catches EF BB BF (the UTF-8 BOM)
+ *
+ * @param {string} content with BOM
+ * @return {string} content value without BOM
+ */
+function stripBOM(content) {
+  if (content.charCodeAt(0) === 0xFEFF) {
+    content = content.slice(1);
+  }
+  return content;
+}
+
 module.exports = {
   isArray: isArray,
   isArrayBuffer: isArrayBuffer,
@@ -1881,6 +1907,7 @@ module.exports = {
   isString: isString,
   isNumber: isNumber,
   isObject: isObject,
+  isPlainObject: isPlainObject,
   isUndefined: isUndefined,
   isDate: isDate,
   isFile: isFile,
@@ -1891,11 +1918,75 @@ module.exports = {
   isStandardBrowserEnv: isStandardBrowserEnv,
   forEach: forEach,
   merge: merge,
-  deepMerge: deepMerge,
   extend: extend,
-  trim: trim
+  trim: trim,
+  stripBOM: stripBOM
 };
 
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/Cards.vue?vue&type=script&lang=js&":
+/*!****************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib??ref--4-0!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/components/Cards.vue?vue&type=script&lang=js& ***!
+  \****************************************************************************************************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+/* harmony default export */ __webpack_exports__["default"] = ({
+  name: 'Cards',
+  props: {
+    products: {
+      type: Array
+    }
+  }
+});
 
 /***/ }),
 
@@ -1909,6 +2000,7 @@ module.exports = {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _Cards_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Cards.vue */ "./resources/js/components/Cards.vue");
+//
 //
 //
 //
@@ -1964,6 +2056,7 @@ __webpack_require__.r(__webpack_exports__);
     location: {
       handler: function handler(newValue, oldValue) {
         this.fetchData();
+        this.loadProducts();
       },
       deep: true
     }
@@ -1976,15 +2069,24 @@ __webpack_require__.r(__webpack_exports__);
       },
       location: {
         name: 'Vilnius'
-      }
+      },
+      products: [{
+        name: 'Umbrela',
+        price: 19.99
+      }, {
+        name: 'Hat',
+        price: 9.77
+      }, {
+        name: 'Jacket',
+        price: 125.00
+      }]
     };
   },
   methods: {
     fetchData: function fetchData() {
       var _this2 = this;
 
-      fetch("https://cors-anywhere.herokuapp.com/https://api.meteo.lt/v1/places/".concat(this.location.name, "/forecasts/long-term")) // fetch(`/api/weather?city=${this.location.name}`)
-      .then(function (response) {
+      fetch("https://cors-anywhere.herokuapp.com/https://api.meteo.lt/v1/places/".concat(this.location.name, "/forecasts/long-term")).then(function (response) {
         return response.json();
       }).then(function (data) {
         _this2.currentTemperature.actual = Math.round(data.forecastTimestamps[0].airTemperature);
@@ -2014,6 +2116,19 @@ __webpack_require__.r(__webpack_exports__);
       };
       return string.replace(/[ĄąČčĘęĖėĮįŠšŲųŪūŽž]/g, function (match) {
         return dictionary[match];
+      });
+    },
+    loadProducts: function loadProducts() {
+      var _this3 = this;
+
+      return fetch('/api/product').then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        data.forEach(function (element) {
+          if (element.weather_condition == _this3.currentTemperature.summary) {
+            _this3.products.unshift(element);
+          }
+        });
       });
     }
   }
@@ -38257,87 +38372,99 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _vm._m(0)
+  return _c("div", { staticClass: "container h-100" }, [
+    _c("div", { staticClass: "row align-middle" }, [
+      _c("div", { staticClass: "col-md-6 col-lg-4 column" }, [
+        _c("div", { staticClass: "card gr-1" }, [
+          _c("div", { staticClass: "txt" }, [
+            _c("h1", [_vm._v(_vm._s(this.products[0].name))]),
+            _vm._v(" "),
+            _c("p", [
+              _vm._v(_vm._s(this.products[0].price) + " eur "),
+              _c("img", {
+                attrs: {
+                  src: "img/" + this.products[0].name + ".png",
+                  alt: "pictureOfItem"
+                }
+              })
+            ])
+          ]),
+          _vm._v(" "),
+          _c("a", { attrs: { href: "#" } }, [_vm._v("Buy")]),
+          _vm._v(" "),
+          _vm._m(0)
+        ])
+      ]),
+      _vm._v(" "),
+      _c("div", { staticClass: "col-md-6 col-lg-4 column" }, [
+        _c("div", { staticClass: "card gr-2" }, [
+          _c("div", { staticClass: "txt" }, [
+            _c("h1", [_vm._v(_vm._s(this.products[1].name))]),
+            _vm._v(" "),
+            _c("p", [
+              _vm._v(_vm._s(this.products[1].price) + " eur "),
+              _c("img", {
+                attrs: {
+                  src: "img/" + this.products[1].name + ".png",
+                  alt: "pictureOfItem"
+                }
+              })
+            ])
+          ]),
+          _vm._v(" "),
+          _c("a", { attrs: { href: "#" } }, [_vm._v("Buy")]),
+          _vm._v(" "),
+          _vm._m(1)
+        ])
+      ]),
+      _vm._v(" "),
+      _c("div", { staticClass: "col-md-6 col-lg-4 column" }, [
+        _c("div", { staticClass: "card gr-3" }, [
+          _c("div", { staticClass: "txt" }, [
+            _c("h1", [_vm._v(_vm._s(this.products[2].name))]),
+            _vm._v(" "),
+            _c("p", [
+              _vm._v(_vm._s(this.products[2].price) + " eur "),
+              _c("img", {
+                attrs: {
+                  src: "img/" + this.products[2].name + ".png",
+                  alt: "pictureOfItem"
+                }
+              })
+            ])
+          ]),
+          _vm._v(" "),
+          _c("a", { attrs: { href: "#" } }, [_vm._v("Buy")]),
+          _vm._v(" "),
+          _vm._m(2)
+        ])
+      ])
+    ])
+  ])
 }
 var staticRenderFns = [
   function() {
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "container h-100" }, [
-      _c("div", { staticClass: "row align-middle" }, [
-        _c("div", { staticClass: "col-md-6 col-lg-4 column" }, [
-          _c("div", { staticClass: "card gr-1" }, [
-            _c("div", { staticClass: "txt" }, [
-              _c("h1", [_vm._v("HAT")]),
-              _vm._v(" "),
-              _c("p", [
-                _vm._v("17.65eur "),
-                _c("img", {
-                  attrs: {
-                    src: __webpack_require__(/*! ../../.././public/img/hat.png */ "./public/img/hat.png"),
-                    alt: "Hat"
-                  }
-                })
-              ])
-            ]),
-            _vm._v(" "),
-            _c("a", { attrs: { href: "#" } }, [_vm._v("Buy")]),
-            _vm._v(" "),
-            _c("div", { staticClass: "ico-card" }, [
-              _c("i", { staticClass: "fa fa-rebel" })
-            ])
-          ])
-        ]),
-        _vm._v(" "),
-        _c("div", { staticClass: "col-md-6 col-lg-4 column" }, [
-          _c("div", { staticClass: "card gr-2" }, [
-            _c("div", { staticClass: "txt" }, [
-              _c("h1", [_vm._v("Rainpants")]),
-              _vm._v(" "),
-              _c("p", [
-                _vm._v("77.66eur "),
-                _c("img", {
-                  attrs: {
-                    src: __webpack_require__(/*! ../../.././public/img/rainpants.png */ "./public/img/rainpants.png"),
-                    alt: "Rainpants"
-                  }
-                })
-              ])
-            ]),
-            _vm._v(" "),
-            _c("a", { attrs: { href: "#" } }, [_vm._v("Buy")]),
-            _vm._v(" "),
-            _c("div", { staticClass: "ico-card" }, [
-              _c("i", { staticClass: "fa fa-codepen" })
-            ])
-          ])
-        ]),
-        _vm._v(" "),
-        _c("div", { staticClass: "col-md-6 col-lg-4 column" }, [
-          _c("div", { staticClass: "card gr-3" }, [
-            _c("div", { staticClass: "txt" }, [
-              _c("h1", [_vm._v("Umbrela")]),
-              _vm._v(" "),
-              _c("p", [
-                _vm._v("19.99eur "),
-                _c("img", {
-                  attrs: {
-                    src: __webpack_require__(/*! ../../.././public/img/umrela.png */ "./public/img/umrela.png"),
-                    alt: "Umrela"
-                  }
-                })
-              ])
-            ]),
-            _vm._v(" "),
-            _c("a", { attrs: { href: "#" } }, [_vm._v("Buy")]),
-            _vm._v(" "),
-            _c("div", { staticClass: "ico-card" }, [
-              _c("i", { staticClass: "fa fa-empire" })
-            ])
-          ])
-        ])
-      ])
+    return _c("div", { staticClass: "ico-card" }, [
+      _c("i", { staticClass: "fa fa-rebel" })
+    ])
+  },
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "ico-card" }, [
+      _c("i", { staticClass: "fa fa-codepen" })
+    ])
+  },
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "ico-card" }, [
+      _c("i", { staticClass: "fa fa-empire" })
     ])
   }
 ]
@@ -38389,7 +38516,17 @@ var render = function() {
           ])
         ]),
         _vm._v(" "),
-        _c("div", [_c("Cards")], 1)
+        _c(
+          "div",
+          [
+            _c("div", { staticClass: "font-italic font-weight-bold mt-4" }, [
+              _vm._v("For this weather we sugest:")
+            ]),
+            _vm._v(" "),
+            _c("Cards", { attrs: { products: _vm.products } })
+          ],
+          1
+        )
       ])
     ])
   ])
@@ -50604,39 +50741,6 @@ module.exports = function(module) {
 
 /***/ }),
 
-/***/ "./public/img/hat.png":
-/*!****************************!*\
-  !*** ./public/img/hat.png ***!
-  \****************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-module.exports = "/images/hat.png?d548c59316ab64ac88d7c3eba9631e8b";
-
-/***/ }),
-
-/***/ "./public/img/rainpants.png":
-/*!**********************************!*\
-  !*** ./public/img/rainpants.png ***!
-  \**********************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-module.exports = "/images/rainpants.png?d08e20c10be7445b2aa2fb77cb43df15";
-
-/***/ }),
-
-/***/ "./public/img/umrela.png":
-/*!*******************************!*\
-  !*** ./public/img/umrela.png ***!
-  \*******************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-module.exports = "/images/umrela.png?5fab0c6737ce8a0b14367c502f4c502a";
-
-/***/ }),
-
 /***/ "./resources/js/app.js":
 /*!*****************************!*\
   !*** ./resources/js/app.js ***!
@@ -50730,17 +50834,19 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _Cards_vue_vue_type_template_id_767212f0___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Cards.vue?vue&type=template&id=767212f0& */ "./resources/js/components/Cards.vue?vue&type=template&id=767212f0&");
-/* harmony import */ var _Cards_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Cards.vue?vue&type=style&index=0&lang=css& */ "./resources/js/components/Cards.vue?vue&type=style&index=0&lang=css&");
-/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+/* harmony import */ var _Cards_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Cards.vue?vue&type=script&lang=js& */ "./resources/js/components/Cards.vue?vue&type=script&lang=js&");
+/* empty/unused harmony star reexport *//* harmony import */ var _Cards_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Cards.vue?vue&type=style&index=0&lang=css& */ "./resources/js/components/Cards.vue?vue&type=style&index=0&lang=css&");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
 
-var script = {}
+
+
 
 
 
 /* normalize component */
 
-var component = Object(_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
-  script,
+var component = Object(_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__["default"])(
+  _Cards_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__["default"],
   _Cards_vue_vue_type_template_id_767212f0___WEBPACK_IMPORTED_MODULE_0__["render"],
   _Cards_vue_vue_type_template_id_767212f0___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"],
   false,
@@ -50754,6 +50860,20 @@ var component = Object(_node_modules_vue_loader_lib_runtime_componentNormalizer_
 if (false) { var api; }
 component.options.__file = "resources/js/components/Cards.vue"
 /* harmony default export */ __webpack_exports__["default"] = (component.exports);
+
+/***/ }),
+
+/***/ "./resources/js/components/Cards.vue?vue&type=script&lang=js&":
+/*!********************************************************************!*\
+  !*** ./resources/js/components/Cards.vue?vue&type=script&lang=js& ***!
+  \********************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Cards_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/babel-loader/lib??ref--4-0!../../../node_modules/vue-loader/lib??vue-loader-options!./Cards.vue?vue&type=script&lang=js& */ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/Cards.vue?vue&type=script&lang=js&");
+/* empty/unused harmony star reexport */ /* harmony default export */ __webpack_exports__["default"] = (_node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Cards_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__["default"]); 
 
 /***/ }),
 

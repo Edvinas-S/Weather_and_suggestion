@@ -14,7 +14,8 @@
                     </div>
                 </div> <!-- end weather -->
                 <div>
-                    <Cards/>
+                    <div class="font-italic font-weight-bold mt-4">For this weather we sugest:</div>
+                    <Cards v-bind:products="products" />
                 </div><!-- end suggestions -->
             </div>
         </div>
@@ -30,7 +31,7 @@ export default {
         Cards
     },
     mounted() {
-        this.fetchData()
+        this.fetchData();
 
         var placesAutocomplete = places({
             appId: 'plPS9O3LEBLU',
@@ -53,7 +54,8 @@ export default {
     watch: {
         location: {
             handler(newValue, oldValue) {
-                this.fetchData()
+                this.fetchData();
+                this.loadProducts();
             },
             deep: true
         }
@@ -66,13 +68,26 @@ export default {
             },
             location: {
                 name: 'Vilnius',
-            }
+            },
+            products: [
+                {
+                    name: 'Umbrela',
+                    price: 19.99,
+                },
+                {
+                    name: 'Hat',
+                    price: 9.77,
+                },
+                {
+                    name: 'Jacket',
+                    price: 125.00,
+                },
+            ],
         }
     },
     methods: {
         fetchData() {
             fetch(`https://cors-anywhere.herokuapp.com/https://api.meteo.lt/v1/places/${this.location.name}/forecasts/long-term`)
-            // fetch(`/api/weather?city=${this.location.name}`)
             .then(response => response.json())
             .then(data => {
                 this.currentTemperature.actual = Math.round(data.forecastTimestamps[0].airTemperature)
@@ -83,6 +98,18 @@ export default {
             const dictionary = {'Ą':'A','ą':'a','Č':'C','č':'c','Ę':'E','ę':'e','Ė':'E','ė':'e','Į':'I','į':'i','Š':'S','š':'s','Ų':'U','ų':'u','Ū':'U','ū':'u','Ž':'Z','ž':'z'};
             return string.replace(/[ĄąČčĘęĖėĮįŠšŲųŪūŽž]/g, match => dictionary[match]);
         },
+        loadProducts() {
+            return fetch('/api/product')
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(element => {
+                    if(element.weather_condition == this.currentTemperature.summary) {
+                        this.products.unshift(element);
+                    }
+                })
+            })
+        },
     },
 }
+
 </script>
