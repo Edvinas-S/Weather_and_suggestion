@@ -11,7 +11,7 @@
 - [x] [Algolia places](https://community.algolia.com/places/)
 
 The app picture:\
-![Image of App](https://github.com/Edvinas-S/Weather_app/blob/master/public/img/app.jpg)
+![Image of App](https://github.com/Edvinas-S/weather_and_suggestion/blob/master/public/img/app.jpg)
 
 ### You can start it like this: 
 - Download zip project and unzip it;
@@ -44,7 +44,13 @@ php artisan migrate
 ```
 php artisan db:seed
 ```
+```
+php artisan serve
+```
+- In your browser go to localhost
+- :eyes:
 
-> P.S. you need PHP and Composer installed glogaly in your machine and local server (e.g. AMPPS) running
+
+> P.S. you need PHP and Composer installed globaly in your machine and local server (e.g. AMPPS) running
 
 #### Author [Edvinas](https://github.com/Edvinas-S)
